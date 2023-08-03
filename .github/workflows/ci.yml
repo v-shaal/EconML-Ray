@@ -193,19 +193,19 @@ jobs:
         include:
           - kind: serial
             opts: '-m "serial" -n 1'
-            extras: "[tf,plt]"
+            extras: "[tf,plt,ray]"
           - kind: other
             opts: '-m "cate_api" -n auto'
-            extras: "[tf,plt]"
+            extras: "[tf,plt,ray]"
           - kind: dml
             opts: '-m "dml"'
-            extras: "[tf,plt]"
+            extras: "[tf,plt,ray]"
           - kind: main
             opts: '-m "not (notebook or automl or dml or serial or cate_api or treatment_featurization)" -n 2'
-            extras: "[tf,plt,dowhy]"
+            extras: "[tf,plt,dowhy,ray]"
           - kind: treatment
             opts: '-m "treatment_featurization" -n auto'
-            extras: "[tf,plt]"
+            extras: "[tf,plt,ray]"
       fail-fast: false    
     runs-on: ${{ matrix.os }}
     steps:
