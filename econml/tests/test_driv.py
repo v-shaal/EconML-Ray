@@ -1,7 +1,7 @@
 # Copyright (c) PyWhy contributors. All rights reserved.
 # Licensed under the MIT License.
 
-from econml.iv.dr import (DRIV, LinearDRIV, SparseLinearDRIV, ForestDRIV, IntentToTreatDRIV, LinearIntentToTreatDRIV,)
+from econml.iv.dr import (DRIV, LinearDRIV, SparseLinearDRIV, ForestDRIV, IntentToTreatDRIV, LinearIntentToTreatDRIV, )
 from econml.iv.dr._dr import _DummyCATE
 from econml.sklearn_extensions.linear_model import StatsModelsLinearRegression
 from econml.utilities import shape
@@ -14,10 +14,17 @@ from scipy import special
 from sklearn.preprocessing import PolynomialFeatures
 import unittest
 
+try:
+    import ray
+
+    ray_installed = True
+except ImportError:
+    ray_installed = False
+
 
 @pytest.mark.cate_api
 class TestDRIV(unittest.TestCase):
-    def test_cate_api(self):
+    def _test_cate_api(self, use_ray):
         def const_marg_eff_shape(n, d_x, binary_T):
             """Constant marginal effect shape."""
             return (n if d_x else 1,) + ((1,) if binary_T else ())
@@ -34,14 +41,14 @@ class TestDRIV(unittest.TestCase):
         y = np.random.normal(size=(n,))
 
         # parameter combinations to test
-        for d_w, d_x, binary_T, binary_Z, projection, featurizer\
-            in itertools.product(
-                [None, 10],     # d_w
-                [None, 3],      # d_x
-                [True, False],  # binary_T
-                [True, False],  # binary_Z
-                [True, False],  # projection
-                [None, PolynomialFeatures(degree=2, include_bias=False), ]):    # featurizer
+        for d_w, d_x, binary_T, binary_Z, projection, featurizer \
+                in itertools.product(
+            [None, 10],  # d_w
+            [None, 3],  # d_x
+            [True, False],  # binary_T
+            [True, False],  # binary_Z
+            [True, False],  # projection
+            [None, PolynomialFeatures(degree=2, include_bias=False), ]):  # featurizer
 
             if d_w is None:
                 W = None
@@ -74,6 +81,7 @@ class TestDRIV(unittest.TestCase):
                     discrete_instrument=binary_Z,
                     discrete_treatment=binary_T,
                     featurizer=featurizer,
+                    use_ray=use_ray,
                 ),
                 LinearDRIV(
                     flexible_model_effect=StatsModelsLinearRegression(fit_intercept=False),
@@ -82,6 +90,7 @@ class TestDRIV(unittest.TestCase):
                     discrete_instrument=binary_Z,
                     discrete_treatment=binary_T,
                     featurizer=featurizer,
+                    use_ray=use_ray,
                 ),
                 SparseLinearDRIV(
                     flexible_model_effect=StatsModelsLinearRegression(fit_intercept=False),
@@ -90,6 +99,7 @@ class TestDRIV(unittest.TestCase):
                     discrete_instrument=binary_Z,
                     discrete_treatment=binary_T,
                     featurizer=featurizer,
+                    use_ray=use_ray,
                 ),
                 ForestDRIV(
                     flexible_model_effect=StatsModelsLinearRegression(fit_intercept=False),
@@ -97,6 +107,7 @@ class TestDRIV(unittest.TestCase):
                     discrete_instrument=binary_Z,
                     discrete_treatment=binary_T,
                     featurizer=featurizer,
+                    use_ray=use_ray,
                 ),
             ]
 
@@ -111,12 +122,14 @@ class TestDRIV(unittest.TestCase):
                         ),
                         fit_cate_intercept=True,
                         featurizer=featurizer,
+                        use_ray=use_ray,
                     ),
                     LinearIntentToTreatDRIV(
                         flexible_model_effect=StatsModelsLinearRegression(
                             fit_intercept=False
                         ),
                         featurizer=featurizer,
+                        use_ray=use_ray,
                     ),
                 ]
 
@@ -173,8 +186,18 @@ class TestDRIV(unittest.TestCase):
                         # test can run shap values
                         _ = est.shap_values(X[:10])
 
-    def test_accuracy(self):
+    @pytest.mark.skipif(not ray_installed, reason="Ray not installed")
+    def test_cate_api_with_ray(self):
+        ray.init()
+        self._test_cate_api(use_ray=True)
+        ray.shutdown()
+
+    def test_cate_api_without_ray(self):
+        self._test_cate_api(use_ray=False)
+
+    def _test_accuracy(self, use_ray):
         np.random.seed(123)
+
         # dgp (binary T, binary Z)
 
         def dgp(n, p, true_fn):
@@ -193,13 +216,15 @@ class TestDRIV(unittest.TestCase):
             return y, T, Z, X
 
         ests_list = [LinearIntentToTreatDRIV(
-            flexible_model_effect=StatsModelsLinearRegression(fit_intercept=False), fit_cate_intercept=True
+            flexible_model_effect=StatsModelsLinearRegression(fit_intercept=False), fit_cate_intercept=True,
+            use_ray=use_ray
         ), LinearDRIV(
             fit_cate_intercept=True,
             projection=False,
             discrete_instrument=True,
             discrete_treatment=True,
-            flexible_model_effect=StatsModelsLinearRegression(fit_intercept=False)
+            flexible_model_effect=StatsModelsLinearRegression(fit_intercept=False),
+            use_ray=use_ray
         )]
 
         # no heterogeneity
@@ -209,6 +234,7 @@ class TestDRIV(unittest.TestCase):
 
         def true_fn(X):
             return true_ate
+
         y, T, Z, X = dgp(n, p, true_fn)
         for est in ests_list:
             with self.subTest(est=est):
@@ -222,6 +248,7 @@ class TestDRIV(unittest.TestCase):
 
         def true_fn(X):
             return true_coef * X[:, 0]
+
         y, T, Z, X = dgp(n, p, true_fn)
         for est in ests_list:
             with self.subTest(est=est):
@@ -232,3 +259,12 @@ class TestDRIV(unittest.TestCase):
                 np.testing.assert_array_less(true_coef, coef_ub)
                 np.testing.assert_array_less(intercept_lb, 0)
                 np.testing.assert_array_less(0, intercept_ub)
+
+    @pytest.mark.skipif(not ray_installed, reason="Ray not installed")
+    def test_accuracy_with_ray(self):
+        ray.init()
+        self._test_accuracy(use_ray=True)
+        ray.shutdown()
+
+    def test_accuracy_without_ray(self):
+        self._test_accuracy(use_ray=False)

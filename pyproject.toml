@@ -35,7 +35,7 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/py-why/EconML"
 "Bug Tracker" = "https://github.com/py-why/EconML/Issues"
-"Source Code" = "https://github.com/py-why/EconML" 
+"Source Code" = "https://github.com/py-why/EconML"
 "Documentation" = "https://econml.azurewebsites.net/"
 
 [project.optional-dependencies]
@@ -61,9 +61,6 @@ plt = [
 dowhy = [
     "dowhy < 0.11"
 ]
-ray = [
-    "ray > 2.0.0"
-]
 all = [
     # Disabled due to incompatibility with scikit-learn
     # azureml-sdk[explain,automl] == 1.0.83
@@ -78,8 +75,7 @@ all = [
     "graphviz",
     # Version capped due to shap incompatibility
     "matplotlib < 3.6.0",
-    "dowhy < 0.11",
-    "ray > 2.0.0"
+    "dowhy < 0.11"
 ]
 
 [build-system]
@@ -94,7 +90,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 addopts = "--junitxml=junit/test-results.xml -n auto --strict-markers --cov-config=setup.cfg --cov=econml"
-markers = [    
+markers = [
     "slow",
     "notebook",
     "automl",

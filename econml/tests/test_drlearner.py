@@ -24,6 +24,13 @@ from econml.utilities import get_feature_names_or_default, shape, hstack, vstack
 from econml.sklearn_extensions.linear_model import StatsModelsLinearRegression
 import econml.tests.utilities  # bugfix for assertWarns
 
+try:
+    import ray
+
+    ray_installed = True
+except ImportError:
+    ray_installed = False
+
 
 @pytest.mark.serial
 class TestDRLearner(unittest.TestCase):
@@ -55,7 +62,7 @@ class TestDRLearner(unittest.TestCase):
             treatment_effect=TestDRLearner._heterogeneous_te,
             propensity=lambda x: (0.8 if (x[2] > -0.5 and x[2] < 0.5) else 0.2))
 
-    def test_cate_api(self):
+    def _test_cate_api(self, use_ray):
         """Test that we correctly implement the CATE API."""
         n = 20
 
@@ -109,13 +116,13 @@ class TestDRLearner(unittest.TestCase):
 
                         intercept_shape = (d_y,) if d_y > 0 else ()
                         intercept_summaryframe_shape = (d_y if d_y > 0 else 1, 6)
-
                         for est in [LinearDRLearner(model_propensity=LogisticRegression(C=1000, solver='lbfgs',
-                                                                                        multi_class='auto')),
+                                                                                        multi_class='auto'),
+                                                    use_ray=use_ray),
                                     DRLearner(model_propensity=LogisticRegression(multi_class='auto'),
                                               model_regression=LinearRegression(),
                                               model_final=StatsModelsLinearRegression(),
-                                              multitask_model_final=True)]:
+                                              multitask_model_final=True, use_ray=use_ray)]:
 
                             # ensure that we can serialize unfit estimator
                             pickle.dumps(est)
@@ -208,8 +215,8 @@ class TestDRLearner(unittest.TestCase):
                                                          (2,) + effect_shape)
                                         np.testing.assert_array_almost_equal(effect_inf.conf_int()[0],
                                                                              est.effect_interval(
-                                            X, T0=T0, T1=T1)[0],
-                                            decimal=5)
+                                                                                 X, T0=T0, T1=T1)[0],
+                                                                             decimal=5)
                                         effect_inf.population_summary()._repr_html_()
 
                                         # test marginal effect inference
@@ -260,11 +267,19 @@ class TestDRLearner(unittest.TestCase):
                                     else:
                                         cm = ExitStack()  # ExitStack can be used as a "do nothing" ContextManager
                                     with cm:
-                                        effect_shape2 = (
-                                            n if d_x else 1,) + ((d_y,) if d_y > 0 else ())
+                                        effect_shape2 = (n if d_x else 1,) + ((d_y,) if d_y > 0 else ())
                                         eff = est.effect(X, T0='a', T1='b')
                                         self.assertEqual(
                                             shape(eff), effect_shape2)
+
+    @pytest.mark.skipif(not ray_installed, reason="Ray not installed")
+    def test_test_cate_api_with_ray(self):
+        ray.init()
+        self._test_cate_api(use_ray=True)
+        ray.shutdown()
+
+    def test_test_cate_api_without_ray(self):
+        self._test_cate_api(use_ray=False)
 
     def test_can_use_vectors(self):
         """
@@ -290,7 +305,7 @@ class TestDRLearner(unittest.TestCase):
                                   C=1000, solver='lbfgs', multi_class='auto'),
                               featurizer=FunctionTransformer(validate=True))
         dml.fit(np.array([1, 2, 1, 2]), np.array([1, 2, 1, 2]), W=np.ones((4, 1)),
-                sample_weight=np.ones((4, )))
+                sample_weight=np.ones((4,)))
         self.assertAlmostEqual(dml.intercept_(T=2), 1)
 
     def test_discrete_treatments(self):
@@ -396,8 +411,7 @@ class TestDRLearner(unittest.TestCase):
         controls = np.random.uniform(-1, 1, size=(5000, 3))
         T = np.random.binomial(2, scipy.special.expit(controls[:, 0]))
         sigma = 0.01
-        y = (1 + .5 * controls[:, 0]) * T + controls[:,
-                                                     0] + np.random.normal(0, sigma, size=(5000,))
+        y = (1 + .5 * controls[:, 0]) * T + controls[:, 0] + np.random.normal(0, sigma, size=(5000,))
         for X in [controls]:
             for W in [None, controls]:
                 for sample_weight in [None, np.ones(X.shape[0])]:
@@ -510,13 +524,12 @@ class TestDRLearner(unittest.TestCase):
                                                     np.testing.assert_allclose(
                                                         est.model_cate(T=t).intercept_, t, rtol=0, atol=.15)
 
-    def test_drlearner_with_inference_all_attributes(self):
+    def _test_drlearner_with_inference_all_attributes(self, use_ray):
         np.random.seed(123)
         controls = np.random.uniform(-1, 1, size=(10000, 2))
         T = np.random.binomial(2, scipy.special.expit(controls[:, 0]))
         sigma = 0.01
-        y = (1 + .5 * controls[:, 0]) * T + controls[:,
-                                                     0] + np.random.normal(0, sigma, size=(10000,))
+        y = (1 + .5 * controls[:, 0]) * T + controls[:, 0] + np.random.normal(0, sigma, size=(10000,))
         for X in [None, controls]:
             for W in [None, controls]:
                 for sample_weight in [None, np.ones(T.shape[0])]:
@@ -533,7 +546,7 @@ class TestDRLearner(unittest.TestCase):
                                                                                                multi_class='auto'),
                                                                             LinearRegression(), LinearDRLearner,
                                                                             StatsModelsInferenceDiscrete(
-                                                                               cov_type='nonrobust')),
+                                                                                cov_type='nonrobust')),
                                                                            (LogisticRegression(solver='lbfgs',
                                                                                                multi_class='auto'),
                                                                             LinearRegression(), SparseLinearDRLearner,
@@ -553,11 +566,13 @@ class TestDRLearner(unittest.TestCase):
                                     if est_class == ForestDRLearner:
                                         est = est_class(model_propensity=model_t,
                                                         model_regression=model_y,
-                                                        n_estimators=1000)
+                                                        n_estimators=1000,
+                                                        use_ray=use_ray)
                                     else:
                                         est = est_class(model_propensity=model_t,
                                                         model_regression=model_y,
-                                                        featurizer=featurizer)
+                                                        featurizer=featurizer,
+                                                        use_ray=use_ray)
 
                                     if (X is None) and (W is None):
                                         with pytest.raises(AttributeError) as e_info:
@@ -713,6 +728,15 @@ class TestDRLearner(unittest.TestCase):
                                         for t in [1, 2]:
                                             np.testing.assert_array_equal(est.feature_importances_(t).shape,
                                                                           [X.shape[1]])
+
+    @pytest.mark.skipif(not ray_installed, reason="Ray not installed")
+    def test_drlearner_with_inference_all_attributes_with_ray(self):
+        ray.init()
+        self._test_drlearner_with_inference_all_attributes(use_ray=True)
+        ray.shutdown()
+
+    def test_drlearner_with_inference_all_attributes_without_ray(self):
+        self._test_drlearner_with_inference_all_attributes(use_ray=False)
 
     @staticmethod
     def _check_with_interval(truth, point, lower, upper):
