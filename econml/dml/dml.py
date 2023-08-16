@@ -1481,7 +1481,6 @@ class NonParamDML(_BaseDML):
                            cache_values=cache_values,
                            inference=inference)
 
-
     def refit_final(self, *, inference='auto'):
         return super().refit_final(inference=inference)
 
