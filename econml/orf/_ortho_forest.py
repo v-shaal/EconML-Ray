@@ -648,7 +648,7 @@ class DMLOrthoForest(BaseOrthoForest):
         self._set_input_names(Y, T, X, set_flag=True)
         Y, T, X, W = check_inputs(Y, T, X, W)
         assert not (self.discrete_treatment and self.treatment_featurizer), "Treatment featurization " \
-                                                                            "is not supported when treatment is discrete"
+            "is not supported when treatment is discrete"
 
         if self.discrete_treatment:
             categories = self.categories
@@ -684,6 +684,7 @@ class DMLOrthoForest(BaseOrthoForest):
         # Override to flatten output if T is flat
         effects = super().const_marginal_effect(X=X)
         return effects.reshape((-1,) + self._d_y + self._d_t)
+
     const_marginal_effect.__doc__ = BaseOrthoForest.const_marginal_effect.__doc__
 
 
@@ -1058,6 +1059,7 @@ class DROrthoForest(BaseOrthoForest):
     @staticmethod
     def nuisance_estimator_generator(propensity_model, model_Y, random_state=None, second_stage=False):
         """Generate nuissance estimator given model inputs from the class."""
+
         def nuisance_estimator(Y, T, X, W, sample_weight=None, split_indices=None):
             # Expand one-hot encoding to include the zero treatment
             ohe_T = np.hstack([np.all(1 - T, axis=1, keepdims=True), T])
@@ -1120,6 +1122,7 @@ class DROrthoForest(BaseOrthoForest):
         we fit a local linear function as opposed to a local constant function. We also penalize
         the linear part to reduce variance.
         """
+
         def parameter_estimator_func(Y, T, X,
                                      nuisance_estimates,
                                      sample_weight,

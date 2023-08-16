@@ -682,9 +682,9 @@ class _OrthoLearner(TreatmentExpansionMixin, LinearCateEstimator):
         """
         self._random_state = check_random_state(self.random_state)
         assert (freq_weight is None) == (
-                sample_var is None), "Sample variances and frequency weights must be provided together!"
+            sample_var is None), "Sample variances and frequency weights must be provided together!"
         assert not (self.discrete_treatment and self.treatment_featurizer), "Treatment featurization " \
-                                                                            "is not supported when treatment is discrete"
+            "is not supported when treatment is discrete"
         if check_input:
             Y, T, X, W, Z, sample_weight, freq_weight, sample_var, groups = check_input_arrays(
                 Y, T, X, W, Z, sample_weight, freq_weight, sample_var, groups)
@@ -888,8 +888,9 @@ class _OrthoLearner(TreatmentExpansionMixin, LinearCateEstimator):
                 folds = splitter.split(to_split, strata)
 
         nuisances, fitted_models, fitted_inds, scores = _crossfit(self._ortho_learner_model_nuisance, folds,
-                                                                  self.use_ray, self.ray_remote_func_options, Y, T, X=X,
-                                                                  W=W, Z=Z, sample_weight=sample_weight, groups=groups)
+                                                                  self.use_ray, self.ray_remote_func_options, Y, T,
+                                                                  X=X, W=W, Z=Z, sample_weight=sample_weight,
+                                                                  groups=groups)
         return nuisances, fitted_models, fitted_inds, scores
 
     def _fit_final(self, Y, T, X=None, W=None, Z=None, nuisances=None, sample_weight=None,

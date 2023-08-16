@@ -176,9 +176,8 @@ class TestDML(unittest.TestCase):
                                                               use_ray=use_ray),
                                               True,
                                               [None, 'auto'] +
-                                              (
-                                                      [BootstrapInference(
-                                                          n_bootstrap_samples=20)] if not is_discrete else [])),
+                                              ([BootstrapInference(n_bootstrap_samples=20)]
+                                              if not is_discrete else [])),
                                              (KernelDML(model_y=WeightedLasso(),
                                                         model_t=model_t,
                                                         fit_cate_intercept=fit_cate_intercept,

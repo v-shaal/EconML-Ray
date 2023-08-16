@@ -148,16 +148,16 @@ class StatsModelsOLS:
 def _compare_classes(est, lr, X_test, alpha=.05, tol=1e-12):
     assert np.all(np.abs(est.coef_ - lr.coef_) < tol), "{}, {}".format(est.coef_, lr.coef_)
     assert np.all(np.abs(np.array(est.coef__interval(alpha=alpha)) -
-                         np.array(lr.coef__interval(alpha=alpha))) < tol),\
+                         np.array(lr.coef__interval(alpha=alpha))) < tol), \
         "{}, {}".format(est.coef__interval(alpha=alpha), np.array(lr.coef__interval(alpha=alpha)))
     assert np.all(np.abs(est.intercept_ - lr.intercept_) < tol), "{}, {}".format(est.intercept_, lr.intercept_)
     assert np.all(np.abs(np.array(est.intercept__interval(alpha=alpha)) -
-                         np.array(lr.intercept__interval(alpha=alpha))) < tol),\
+                         np.array(lr.intercept__interval(alpha=alpha))) < tol), \
         "{}, {}".format(est.intercept__interval(alpha=alpha), lr.intercept__interval(alpha=alpha))
     assert np.all(np.abs(est.predict(X_test) - lr.predict(X_test)) <
                   tol), "{}, {}".format(est.predict(X_test), lr.predict(X_test))
     assert np.all(np.abs(np.array(est.predict_interval(X_test, alpha=alpha)) -
-                         np.array(lr.predict_interval(X_test, alpha=alpha))) < tol),\
+                         np.array(lr.predict_interval(X_test, alpha=alpha))) < tol), \
         "{}, {}".format(est.predict_interval(X_test, alpha=alpha), lr.predict_interval(X_test, alpha=alpha))
 
 
@@ -244,24 +244,25 @@ def _summarize(X, y, w=None):
 
 def _compare_dml_classes(est, lr, X_test, alpha=.05, tol=1e-10):
     assert np.all(np.abs(est.coef_ - lr.coef_) < tol), "{}, {}".format(est.coef_, lr.coef_)
-    assert np.all(np.abs(np.array(est.coef__interval(alpha=alpha)) - np.array(lr.coef__interval(alpha=alpha))) < tol),\
+    assert np.all(np.abs(np.array(est.coef__interval(alpha=alpha)) - np.array(lr.coef__interval(alpha=alpha))) <
+                  tol), \
         "{}, {}".format(np.array(est.coef__interval(alpha=alpha)), np.array(lr.coef__interval(alpha=alpha)))
     assert np.all(np.abs(est.effect(X_test) - lr.effect(X_test)) <
                   tol), "{}, {}".format(est.effect(X_test), lr.effect(X_test))
     assert np.all(np.abs(np.array(est.effect_interval(X_test, alpha=alpha)) -
-                         np.array(lr.effect_interval(X_test, alpha=alpha))) < tol),\
+                         np.array(lr.effect_interval(X_test, alpha=alpha))) < tol), \
         "{}, {}".format(est.effect_interval(X_test, alpha=alpha), lr.effect_interval(X_test, alpha=alpha))
 
 
 def _compare_dr_classes(est, lr, X_test, alpha=.05, tol=1e-10):
     assert np.all(np.abs(est.coef_(T=1) - lr.coef_(T=1)) < tol), "{}, {}".format(est.coef_(T=1), lr.coef_(T=1))
     assert np.all(np.abs(np.array(est.coef__interval(T=1, alpha=alpha)) -
-                         np.array(lr.coef__interval(T=1, alpha=alpha))) < tol),\
+                         np.array(lr.coef__interval(T=1, alpha=alpha))) < tol), \
         "{}, {}".format(np.array(est.coef__interval(T=1, alpha=alpha)), np.array(lr.coef__interval(T=1, alpha=alpha)))
     assert np.all(np.abs(est.effect(X_test) - lr.effect(X_test)) <
                   tol), "{}, {}".format(est.effect(X_test), lr.effect(X_test))
     assert np.all(np.abs(np.array(est.effect_interval(X_test, alpha=alpha)) -
-                         np.array(lr.effect_interval(X_test, alpha=alpha))) < tol),\
+                         np.array(lr.effect_interval(X_test, alpha=alpha))) < tol), \
         "{}, {}".format(est.effect_interval(X_test, alpha=alpha), lr.effect_interval(X_test, alpha=alpha))
 
 
@@ -278,6 +279,7 @@ class TestStatsModels(unittest.TestCase):
 
         def true_effect(x):
             return x[:, 0] + .5
+
         y = true_effect(X) * T + X[:, 0] + X[:, 2]
         weights = np.random.uniform(0, 1, size=(X.shape[0]))
 
@@ -304,6 +306,7 @@ class TestStatsModels(unittest.TestCase):
 
             def true_effect(x):
                 return np.hstack([x[:, [0]] + .5 + t for t in range(p)])
+
             y = np.zeros((n, p))
             y = true_effect(X) * T.reshape(-1, 1) + X[:, [0] * p] + \
                 (0 * X[:, [0] * p] + 1) * np.random.normal(0, 1, size=(n, p))
@@ -355,7 +358,7 @@ class TestStatsModels(unittest.TestCase):
         y = X[:, 0]
         est = OLS(fit_intercept=False, cov_type="nonrobust").fit(X, y)
         assert np.all(np.abs(est.coef_ - [1, 0, 0]) <= 1e-12), "{}, {}".format(est.coef_, [1, 0, 0])
-        assert np.all(np.abs(est.coef__interval() - np.array([[1, 0, 0], [1, 0, 0]])) <= 1e-12),\
+        assert np.all(np.abs(est.coef__interval() - np.array([[1, 0, 0], [1, 0, 0]])) <= 1e-12), \
             "{}, {}".format(est.coef__interval(), np.array([[1, 0, 0], [1, 0, 0]]))
         assert np.all(est.coef_stderr_ <= 1e-12)
         assert np.all(est._param_var <= 1e-12)
@@ -366,7 +369,7 @@ class TestStatsModels(unittest.TestCase):
         est = OLS(fit_intercept=True, cov_type="nonrobust").fit(X, y)
         assert np.all(np.abs(est.coef_ - np.array([1] + [0] * (d - 1))) <=
                       1e-12), "{}, {}".format(est.coef_, [1] + [0] * (d - 1))
-        assert np.all(np.abs(est.coef__interval() - np.array([[1] + [0] * (d - 1), [1] + [0] * (d - 1)])) <= 1e-12),\
+        assert np.all(np.abs(est.coef__interval() - np.array([[1] + [0] * (d - 1), [1] + [0] * (d - 1)])) <= 1e-12), \
             "{}, {}".format(est.coef__interval(), np.array([[1] + [0] * (d - 1), [1] + [0] * (d - 1)]))
         assert np.all(est.coef_stderr_ <= 1e-12)
         assert np.all(est._param_var <= 1e-12)
@@ -383,12 +386,12 @@ class TestStatsModels(unittest.TestCase):
         assert np.all(np.abs(est.coef_stderr_ - np.array([1] * d)) <= 1e-12)
         assert np.all(np.abs(est.coef__interval()[0] -
                              np.array([scipy.stats.norm.ppf(.025, loc=1, scale=1)] +
-                                      [scipy.stats.norm.ppf(.025, loc=0, scale=1)] * (d - 1))) <= 1e-12),\
+                                      [scipy.stats.norm.ppf(.025, loc=0, scale=1)] * (d - 1))) <= 1e-12), \
             "{}, {}".format(est.coef__interval()[0], np.array([scipy.stats.norm.ppf(.025, loc=1, scale=1)] +
                                                               [scipy.stats.norm.ppf(.025, loc=0, scale=1)] * (d - 1)))
         assert np.all(np.abs(est.coef__interval()[1] -
                              np.array([scipy.stats.norm.ppf(.975, loc=1, scale=1)] +
-                                      [scipy.stats.norm.ppf(.975, loc=0, scale=1)] * (d - 1))) <= 1e-12),\
+                                      [scipy.stats.norm.ppf(.975, loc=0, scale=1)] * (d - 1))) <= 1e-12), \
             "{}, {}".format(est.coef__interval()[1], np.array([scipy.stats.norm.ppf(.975, loc=1, scale=1)] +
                                                               [scipy.stats.norm.ppf(.975, loc=0, scale=1)] * (d - 1)))
 
@@ -405,13 +408,13 @@ class TestStatsModels(unittest.TestCase):
             assert np.all(np.abs(est.coef_stderr_[t] - np.array([1] * d)) <= 1e-12), "{}".format(est.coef_stderr_[t])
             assert np.all(np.abs(est.coef__interval()[0][t] -
                                  np.array([scipy.stats.norm.ppf(.025, loc=1, scale=1)] +
-                                          [scipy.stats.norm.ppf(.025, loc=0, scale=1)] * (d - 1))) <= 1e-12),\
+                                          [scipy.stats.norm.ppf(.025, loc=0, scale=1)] * (d - 1))) <= 1e-12), \
                 "{}, {}".format(est.coef__interval()[0][t],
                                 np.array([scipy.stats.norm.ppf(.025, loc=1, scale=1)] +
                                          [scipy.stats.norm.ppf(.025, loc=0, scale=1)] * (d - 1)))
             assert np.all(np.abs(est.coef__interval()[1][t] -
                                  np.array([scipy.stats.norm.ppf(.975, loc=1, scale=1)] +
-                                          [scipy.stats.norm.ppf(.975, loc=0, scale=1)] * (d - 1))) <= 1e-12),\
+                                          [scipy.stats.norm.ppf(.975, loc=0, scale=1)] * (d - 1))) <= 1e-12), \
                 "{}, {}".format(est.coef__interval()[1][t],
                                 np.array([scipy.stats.norm.ppf(.975, loc=1, scale=1)] +
                                          [scipy.stats.norm.ppf(.975, loc=0, scale=1)] * (d - 1)))
@@ -433,20 +436,22 @@ class TestStatsModels(unittest.TestCase):
                           1e-12), "{}".format(est.coef_stderr_[t])
             assert np.all(np.abs(est.coef__interval()[0][t] -
                                  np.array([scipy.stats.norm.ppf(.025, loc=1, scale=np.sqrt(2))] +
-                                          [scipy.stats.norm.ppf(.025, loc=0, scale=np.sqrt(2))] * (d - 1))) <= 1e-12),\
+                                          [scipy.stats.norm.ppf(.025, loc=0, scale=np.sqrt(2))] * (d - 1))) <=
+                          1e-12), \
                 "{}, {}".format(est.coef__interval()[0][t],
                                 np.array([scipy.stats.norm.ppf(.025, loc=1, scale=np.sqrt(2))] +
                                          [scipy.stats.norm.ppf(.025, loc=0, scale=np.sqrt(2))] * (d - 1)))
             assert np.all(np.abs(est.coef__interval()[1][t] -
                                  np.array([scipy.stats.norm.ppf(.975, loc=1, scale=np.sqrt(2))] +
-                                          [scipy.stats.norm.ppf(.975, loc=0, scale=np.sqrt(2))] * (d - 1))) <= 1e-12),\
+                                          [scipy.stats.norm.ppf(.975, loc=0, scale=np.sqrt(2))] * (d - 1))) <=
+                          1e-12), \
                 "{}, {}".format(est.coef__interval()[1][t],
                                 np.array([scipy.stats.norm.ppf(.975, loc=1, scale=np.sqrt(2))] +
                                          [scipy.stats.norm.ppf(.975, loc=0, scale=np.sqrt(2))] * (d - 1)))
             assert np.all(np.abs(est.intercept_[t]) <= 1e-12), "{}, {}".format(est.intercept_[t])
             assert np.all(np.abs(est.intercept_stderr_[t] - 1) <= 1e-12), "{}".format(est.intercept_stderr_[t])
             assert np.all(np.abs(est.intercept__interval()[0][t] -
-                                 scipy.stats.norm.ppf(.025, loc=0, scale=1)) <= 1e-12),\
+                                 scipy.stats.norm.ppf(.025, loc=0, scale=1)) <= 1e-12), \
                 "{}, {}".format(est.intercept__interval()[0][t], scipy.stats.norm.ppf(.025, loc=0, scale=1))
 
     def test_comp_with_statsmodels(self):
@@ -462,18 +467,19 @@ class TestStatsModels(unittest.TestCase):
 
         def true_effect(x):
             return x[:, 0] + .5
+
         y = true_effect(X) * T + X[:, 0] + X[:, 2] + np.random.normal(0, 1, size=(n,))
         X_test = np.unique(np.random.binomial(1, .5, size=(n, d)), axis=0)
         for fit_intercept in [True, False]:
             for cov_type in ['nonrobust', 'HC0', 'HC1']:
                 est = OLS(fit_intercept=fit_intercept, cov_type=cov_type).fit(X, y)
                 lr = StatsModelsOLS(fit_intercept=fit_intercept, fit_args={
-                                    'cov_type': cov_type, 'use_t': False}).fit(X, y)
+                    'cov_type': cov_type, 'use_t': False}).fit(X, y)
                 _compare_classes(est, lr, X_test)
                 # compare with weight
                 est = OLS(fit_intercept=fit_intercept, cov_type=cov_type).fit(X, y, sample_weight=weight)
                 lr = StatsModelsOLS(fit_intercept=fit_intercept, fit_args={
-                                    'cov_type': cov_type, 'use_t': False}).fit(X, y, sample_weight=weight)
+                    'cov_type': cov_type, 'use_t': False}).fit(X, y, sample_weight=weight)
                 _compare_classes(est, lr, X_test)
 
         n = 1000
@@ -504,12 +510,12 @@ class TestStatsModels(unittest.TestCase):
             for alpha in [.01, .05, .1]:
                 _compare_classes(OLS(fit_intercept=False, cov_type=cov_type).fit(X, y),
                                  StatsModelsOLS(fit_intercept=False, fit_args={
-                                                'cov_type': cov_type, 'use_t': False}).fit(X, y),
+                                     'cov_type': cov_type, 'use_t': False}).fit(X, y),
                                  X_test, alpha=alpha)
                 # compare with weight
                 _compare_classes(OLS(fit_intercept=False, cov_type=cov_type).fit(X, y, sample_weight=weight),
                                  StatsModelsOLS(fit_intercept=False, fit_args={
-                                                'cov_type': cov_type, 'use_t': False}).fit(X, y, sample_weight=weight),
+                                     'cov_type': cov_type, 'use_t': False}).fit(X, y, sample_weight=weight),
                                  X_test, alpha=alpha)
 
         d = 3
@@ -537,6 +543,7 @@ class TestStatsModels(unittest.TestCase):
 
             def true_effect(x):
                 return np.hstack([x[:, [0]] + .5 + t for t in range(p)])
+
             y = np.zeros((n, p))
             y = true_effect(X) * T.reshape(-1, 1) + X[:, [0] * p] + \
                 (0 * X[:, [0] * p] + 1) * np.random.normal(0, 1, size=(n, p))
@@ -547,30 +554,29 @@ class TestStatsModels(unittest.TestCase):
                     for alpha in [.01, .05, .2]:
                         est = OLS(fit_intercept=fit_intercept, cov_type=cov_type).fit(X, y, sample_weight=weight)
                         lr = [StatsModelsOLS(fit_intercept=fit_intercept, fit_args={
-                                             'cov_type': cov_type, 'use_t': False}).fit(X, y[:, t],
-                                                                                        sample_weight=weight)
-                              for t in range(p)]
+                            'cov_type': cov_type, 'use_t': False}).fit(X, y[:, t], sample_weight=weight)
+                            for t in range(p)]
                         for t in range(p):
-                            assert np.all(np.abs(est.coef_[t] - lr[t].coef_) < 1e-12),\
+                            assert np.all(np.abs(est.coef_[t] - lr[t].coef_) < 1e-12), \
                                 "{}, {}, {}: {}, {}".format(cov_type, fit_intercept, t, est.coef_[t], lr[t].coef_)
                             assert np.all(np.abs(np.array(est.coef__interval(alpha=alpha))[:, t] -
-                                                 lr[t].coef__interval(alpha=alpha)) < 1e-12),\
+                                                 lr[t].coef__interval(alpha=alpha)) < 1e-12), \
                                 "{}, {}, {}: {} vs {}".format(cov_type, fit_intercept, t,
                                                               np.array(est.coef__interval(alpha=alpha))[:, t],
                                                               lr[t].coef__interval(alpha=alpha))
-                            assert np.all(np.abs(est.intercept_[t] - lr[t].intercept_) < 1e-12),\
+                            assert np.all(np.abs(est.intercept_[t] - lr[t].intercept_) < 1e-12), \
                                 "{}, {}, {}: {} vs {}".format(cov_type, fit_intercept, t,
                                                               est.intercept_[t], lr[t].intercept_)
                             assert np.all(np.abs(np.array(est.intercept__interval(alpha=alpha))[:, t] -
-                                                 lr[t].intercept__interval(alpha=alpha)) < 1e-12),\
+                                                 lr[t].intercept__interval(alpha=alpha)) < 1e-12), \
                                 "{}, {}, {}: {} vs {}".format(cov_type, fit_intercept, t,
                                                               np.array(est.intercept__interval(alpha=alpha))[:, t],
                                                               lr[t].intercept__interval(alpha=alpha))
-                            assert np.all(np.abs(est.predict(X_test)[:, t] - lr[t].predict(X_test)) < 1e-12),\
-                                "{}, {}, {}: {} vs {}".format(cov_type, fit_intercept, t, est.predict(X_test)[
-                                                              :, t], lr[t].predict(X_test))
+                            assert np.all(np.abs(est.predict(X_test)[:, t] - lr[t].predict(X_test)) < 1e-12), \
+                                "{}, {}, {}: {} vs {}".format(cov_type, fit_intercept, t,
+                                                              est.predict(X_test)[:, t], lr[t].predict(X_test))
                             assert np.all(np.abs(np.array(est.predict_interval(X_test, alpha=alpha))[:, :, t] -
-                                                 lr[t].predict_interval(X_test, alpha=alpha)) < 1e-12),\
+                                                 lr[t].predict_interval(X_test, alpha=alpha)) < 1e-12), \
                                 "{}, {}, {}: {} vs {}".format(cov_type, fit_intercept, t,
                                                               np.array(est.predict_interval(X_test,
                                                                                             alpha=alpha))[:, :, t],
@@ -687,6 +693,7 @@ class TestStatsModels(unittest.TestCase):
 
                         def true_effect(x):
                             return np.hstack([x[:, [0]] + t for t in range(p)])
+
                         y = true_effect(X) * T.reshape(-1, 1) + X[:, [0] * p] + \
                             (1 * X[:, [0]] + 1) * np.random.normal(0, 1, size=(n, p))
                         if p == 1:
@@ -695,8 +702,8 @@ class TestStatsModels(unittest.TestCase):
 
                         XT = np.hstack([X, T.reshape(-1, 1)])
                         (X1, X2, y1, y2, w1, w2,
-                            X_final_first, X_final_sec, y_sum_first, y_sum_sec, w_sum_first, w_sum_sec, n_sum_first,
-                            n_sum_sec, var_first, var_sec) = _summarize(XT, y, w)
+                         X_final_first, X_final_sec, y_sum_first, y_sum_sec, w_sum_first, w_sum_sec, n_sum_first,
+                         n_sum_sec, var_first, var_sec) = _summarize(XT, y, w)
                         X = np.vstack([X1, X2])
                         y = np.concatenate((y1, y2))
                         w = np.concatenate((w1, w2))
@@ -723,6 +730,7 @@ class TestStatsModels(unittest.TestCase):
                             def split(self, X, T):
                                 return [(np.arange(0, first_half), np.arange(first_half, X.shape[0])),
                                         (np.arange(first_half, X.shape[0]), np.arange(0, first_half))]
+
                         for first_stage_model in [LinearRegression(),
                                                   WeightedLasso(alpha=0.01, fit_intercept=True,
                                                                 tol=1e-12, random_state=123),
@@ -772,6 +780,7 @@ class TestStatsModels(unittest.TestCase):
 
                     def true_effect(x):
                         return np.hstack([x[:, [0]] + t for t in range(p)])
+
                     y = true_effect(X) * T.reshape(-1, 1) + X[:, [0] * p] + \
                         (1 * X[:, [0]] + 1) * np.random.normal(0, 1, size=(n, p))
                     if p == 1:
@@ -780,8 +789,8 @@ class TestStatsModels(unittest.TestCase):
 
                     XT = np.hstack([X, T.reshape(-1, 1)])
                     (X1, X2, y1, y2, w1, w2,
-                        X_final_first, X_final_sec, y_sum_first, y_sum_sec, w_sum_first, w_sum_sec, n_sum_first,
-                        n_sum_sec, var_first, var_sec) = _summarize(XT, y, w)
+                     X_final_first, X_final_sec, y_sum_first, y_sum_sec, w_sum_first, w_sum_sec, n_sum_first,
+                     n_sum_sec, var_first, var_sec) = _summarize(XT, y, w)
                     X = np.vstack([X1, X2])
                     y = np.concatenate((y1, y2))
                     w = np.concatenate((w1, w2))
@@ -808,6 +817,7 @@ class TestStatsModels(unittest.TestCase):
                         def split(self, X, T):
                             return [(np.arange(0, first_half), np.arange(first_half, X.shape[0])),
                                     (np.arange(first_half, X.shape[0]), np.arange(0, first_half))]
+
                     for first_stage_model in [LinearRegression(),
                                               WeightedLasso(alpha=0.01, fit_intercept=True,
                                                             tol=1e-12, random_state=123),
@@ -855,6 +865,7 @@ class TestStatsModels(unittest.TestCase):
 
                     def true_effect(x):
                         return x[:, [0]]
+
                     y = true_effect(X) * T.reshape(-1, 1) + X[:, [0] * 1] + \
                         (1 * X[:, [0]] + 1) * np.random.normal(0, 1, size=(n, 1))
                     y = y.flatten()
@@ -862,8 +873,8 @@ class TestStatsModels(unittest.TestCase):
 
                     XT = np.hstack([X, T.reshape(-1, 1)])
                     (X1, X2, y1, y2, w1, w2,
-                        X_final_first, X_final_sec, y_sum_first, y_sum_sec, w_sum_first, w_sum_sec, n_sum_first,
-                        n_sum_sec, var_first, var_sec) = _summarize(XT, y, w)
+                     X_final_first, X_final_sec, y_sum_first, y_sum_sec, w_sum_first, w_sum_sec, n_sum_first,
+                     n_sum_sec, var_first, var_sec) = _summarize(XT, y, w)
                     X = np.vstack([X1, X2])
                     y = np.concatenate((y1, y2))
                     w = np.concatenate((w1, w2))
@@ -890,6 +901,7 @@ class TestStatsModels(unittest.TestCase):
                         def split(self, X, T):
                             return [(np.arange(0, first_half), np.arange(first_half, X.shape[0])),
                                     (np.arange(first_half, X.shape[0]), np.arange(0, first_half))]
+
                     for model_regression in [LinearRegression(),
                                              WeightedLasso(alpha=0.01, fit_intercept=True,
                                                            tol=1e-12, random_state=123),
@@ -940,6 +952,7 @@ class TestStatsModels(unittest.TestCase):
 
                     def true_effect(x):
                         return x[:, [0]]
+
                     y = true_effect(X) * T.reshape(-1, 1) + X[:, [0] * 1] + \
                         (1 * X[:, [0]] + 1) * np.random.normal(0, 1, size=(n, 1))
                     y = y.flatten()
@@ -947,8 +960,8 @@ class TestStatsModels(unittest.TestCase):
 
                     XTZ = np.hstack([X, T.reshape(-1, 1), Z.reshape(-1, 1)])
                     (X1, X2, y1, y2, w1, w2,
-                        X_final_first, X_final_sec, y_sum_first, y_sum_sec, w_sum_first, w_sum_sec, n_sum_first,
-                        n_sum_sec, var_first, var_sec) = _summarize(XTZ, y, w)
+                     X_final_first, X_final_sec, y_sum_first, y_sum_sec, w_sum_first, w_sum_sec, n_sum_first,
+                     n_sum_sec, var_first, var_sec) = _summarize(XTZ, y, w)
                     X = np.vstack([X1, X2])
                     y = np.concatenate((y1, y2))
                     w = np.concatenate((w1, w2))
@@ -975,6 +988,7 @@ class TestStatsModels(unittest.TestCase):
                         def split(self, X, T):
                             return [(np.arange(0, first_half), np.arange(first_half, X.shape[0])),
                                     (np.arange(first_half, X.shape[0]), np.arange(0, first_half))]
+
                     for model_regression in [LinearRegression(),
                                              WeightedLasso(alpha=0.01, fit_intercept=True,
                                                            tol=1e-12, random_state=123),
@@ -1036,6 +1050,7 @@ class TestStatsModels(unittest.TestCase):
 
                     def true_effect(x):
                         return x[:, [0]]
+
                     y = true_effect(X) * T.reshape(-1, 1) + X[:, [0] * 1] + \
                         (1 * X[:, [0]] + 1) * np.random.normal(0, 1, size=(n, 1))
                     y = y.flatten()
@@ -1043,8 +1058,8 @@ class TestStatsModels(unittest.TestCase):
 
                     XTZ = np.hstack([X, T.reshape(-1, 1), Z.reshape(-1, 1)])
                     (X1, X2, y1, y2, w1, w2,
-                        X_final_first, X_final_sec, y_sum_first, y_sum_sec, w_sum_first, w_sum_sec, n_sum_first,
-                        n_sum_sec, var_first, var_sec) = _summarize(XTZ, y, w)
+                     X_final_first, X_final_sec, y_sum_first, y_sum_sec, w_sum_first, w_sum_sec, n_sum_first,
+                     n_sum_sec, var_first, var_sec) = _summarize(XTZ, y, w)
                     X = np.vstack([X1, X2])
                     y = np.concatenate((y1, y2))
                     w = np.concatenate((w1, w2))
@@ -1071,6 +1086,7 @@ class TestStatsModels(unittest.TestCase):
                         def split(self, X, T):
                             return [(np.arange(0, first_half), np.arange(first_half, X.shape[0])),
                                     (np.arange(first_half, X.shape[0]), np.arange(0, first_half))]
+
                     for model_regression in [LinearRegression(),
                                              WeightedLasso(alpha=0.01, fit_intercept=True,
                                                            tol=1e-12, random_state=123),
@@ -1131,6 +1147,7 @@ class TestStatsModels(unittest.TestCase):
 
                             def true_effect(x, i):
                                 return np.hstack([x[:, [0]] + 10 * t + i for t in range(p)])
+
                             y = np.sum((true_effect(X, i) * T[:, [i]] for i in range(q)), axis=0) + X[:, [0] * p]
                             if p == 1:
                                 y = y.flatten()
@@ -1210,6 +1227,7 @@ class TestStatsModels(unittest.TestCase):
                                 def split(self, X, T):
                                     return [(np.arange(0, first_half_sum), np.arange(first_half_sum, X.shape[0])),
                                             (np.arange(first_half_sum, X.shape[0]), np.arange(0, first_half_sum))]
+
                             est = LinearDML(
                                 model_y=LinearRegression(),
                                 model_t=LinearRegression(),
@@ -1267,7 +1285,7 @@ class TestStatsModels2SLS(unittest.TestCase):
         assert est.cov_type == iv2sls.cov_type, "{}, {}".format(est.cov_type, iv2sls.cov_type)
         np.testing.assert_allclose(est.coef_, iv2sls.params, rtol=tol, atol=0)
         np.testing.assert_allclose(est._param_var, iv2sls.cov_params(), rtol=tol, atol=0)
-        np.testing.assert_allclose(est.coef__interval(alpha=alpha)[
-                                   0], iv2sls.conf_int(alpha=alpha)[:, 0], rtol=tol, atol=0)
-        np.testing.assert_allclose(est.coef__interval(alpha=alpha)[
-                                   1], iv2sls.conf_int(alpha=alpha)[:, 1], rtol=tol, atol=0)
+        np.testing.assert_allclose(est.coef__interval(alpha=alpha)
+                                   [0], iv2sls.conf_int(alpha=alpha)[:, 0], rtol=tol, atol=0)
+        np.testing.assert_allclose(est.coef__interval(alpha=alpha)
+                                   [1], iv2sls.conf_int(alpha=alpha)[:, 1], rtol=tol, atol=0)

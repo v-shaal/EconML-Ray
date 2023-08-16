@@ -292,7 +292,6 @@ class _RLearner(_OrthoLearner):
                          use_ray=use_ray,
                          ray_remote_func_options=ray_remote_func_options)
 
-
     @abstractmethod
     def _gen_model_y(self):
         """
