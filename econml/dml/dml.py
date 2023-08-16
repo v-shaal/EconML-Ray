@@ -35,7 +35,6 @@ from ..utilities import (_deprecate_positional, add_intercept,
                          get_feature_names_or_default, filter_none_kwargs)
 from .._shap import _shap_explain_model_cate
 
-
 class _FirstStageWrapper:
     def __init__(self, model, is_Y, featurizer, linear_first_stages, discrete_treatment):
         self._model = clone(model, safe=False)
