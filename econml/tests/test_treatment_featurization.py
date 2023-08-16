@@ -577,4 +577,4 @@ class TestTreatmentFeaturization(unittest.TestCase):
 
     def test_identity_feat_with_cate_api(self):
         treatment_featurizations = [FunctionTransformer()]
-        TestDML()._test_cate_api(treatment_featurizations)
+        TestDML()._test_cate_api(treatment_featurizations, use_ray=False)
