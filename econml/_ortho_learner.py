@@ -523,7 +523,7 @@ class _OrthoLearner(TreatmentExpansionMixin, LinearCateEstimator):
         self.mc_iters = mc_iters
         self.mc_agg = mc_agg
         self.use_ray = use_ray
-        self.ray_remote_func_opt = ray_remote_func_options
+        self.ray_remote_func_options = ray_remote_func_options
         super().__init__()
 
     @abstractmethod
@@ -737,7 +737,7 @@ class _OrthoLearner(TreatmentExpansionMixin, LinearCateEstimator):
                     return self._fit_nuisances(Y, T, X, W, Z, sample_weight=sample_weight, groups=groups)
 
                 # Create Ray remote jobs for parallel processing
-                self.nuisances_ref = [ray.remote(_fit_nuisances).options(**self.ray_remote_func_opt).remote(
+                self.nuisances_ref = [ray.remote(_fit_nuisances).options(**self.ray_remote_func_options).remote(
                     Y, T, X, W, Z, sample_weight_nuisances, groups) for _ in range(self.mc_iters or 1)]
 
             for idx in range(self.mc_iters or 1):
@@ -888,7 +888,7 @@ class _OrthoLearner(TreatmentExpansionMixin, LinearCateEstimator):
                 folds = splitter.split(to_split, strata)
 
         nuisances, fitted_models, fitted_inds, scores = _crossfit(self._ortho_learner_model_nuisance, folds,
-                                                                  self.use_ray, self.ray_remote_func_opt, Y, T, X=X,
+                                                                  self.use_ray, self.ray_remote_func_options, Y, T, X=X,
                                                                   W=W, Z=Z, sample_weight=sample_weight, groups=groups)
         return nuisances, fitted_models, fitted_inds, scores
 

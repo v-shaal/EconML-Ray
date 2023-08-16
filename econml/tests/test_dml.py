@@ -1145,6 +1145,7 @@ class TestDML(unittest.TestCase):
                 assert len(est.nuisance_scores_t[0]) == len(est.nuisance_scores_y[0]) == cv
                 est.score(y, T, X=X, W=W)
 
+    @pytest.mark.skipif(not ray_installed, reason="Ray not installed")
     def test_nuisance_scores_with_ray(self):
         ray.init()
         self._test_nuisance_scores(use_ray=True)
