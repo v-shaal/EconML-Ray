@@ -5,7 +5,7 @@ import unittest
 import pytest
 import pickle
 
-import ray
+
 from sklearn.linear_model import LinearRegression, Lasso, LassoCV, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, FunctionTransformer, PolynomialFeatures
@@ -28,7 +28,6 @@ from econml.grf import MultiOutputGRF
 
 try:
     import ray
-
     ray_installed = True
 except ImportError:
     ray_installed = False
